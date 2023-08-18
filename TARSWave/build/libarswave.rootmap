@@ -1,0 +1,18 @@
+[ libarswave.so ]
+# List of selected classes
+class TARSArray
+class TARSBase
+class TARSBlock
+class TARSCalibration
+class TARSConst
+class TARSParameters
+class TARSWave
+class TDoubleArray
+header TARSArray.h
+header TARSBase.h
+header TARSBlock.h
+header TARSCalibration.h
+header TARSConst.h
+header TARSParameters.h
+header TARSWave.h
+header TDoubleArray.h
