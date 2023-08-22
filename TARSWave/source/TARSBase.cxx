@@ -26,7 +26,7 @@ ClassImp(TARSBase)
 // 
 ////////////////////////////////////////////////////////////////////////////////
   
-UInt_t           TARSBase::fgSize=128;
+UInt_t           TARSBase::fgSize=110; // FIXME: #samples for NPS channels
 Int_t            TARSBase::fNbChanels=-1;
 UInt_t           TARSBase::fNbChannelsCalo=0;
 UInt_t           TARSBase::fNbChannelsPA=0;
@@ -122,7 +122,7 @@ void TARSBase::InitAnalysisWindowDB(Int_t* min, Int_t* max, Int_t run)
     Float_t *val=db->GetEntry_f("CALO_calib_ARSTimeOffset",run);
     for(Int_t i=0;i<fNbChannelsCalo;i++){
       fmin[cp]=TMath::Max(Int_t(min[cp]-val[i]+0.5),0);
-      fmax[cp]=TMath::Min(Int_t(max[cp]-val[i]+0.5),128);
+      fmax[cp]=TMath::Min(Int_t(max[cp]-val[i]+0.5),110);
       cp++;
     }
   delete val;
@@ -131,7 +131,7 @@ void TARSBase::InitAnalysisWindowDB(Int_t* min, Int_t* max, Int_t run)
     Float_t *val=db->GetEntry_f("PA_calib_ARSTimeOffset",run);
     for(Int_t i=0;i<fNbChannelsPA;i++){
       fmin[cp]=TMath::Max(Int_t(min[cp]-val[i]+0.5),0);
-      fmax[cp]=TMath::Min(Int_t(max[cp]-val[i]+0.5),128);
+      fmax[cp]=TMath::Min(Int_t(max[cp]-val[i]+0.5),110);
       cp++;
     }
   delete val;
@@ -140,7 +140,7 @@ void TARSBase::InitAnalysisWindowDB(Int_t* min, Int_t* max, Int_t run)
     Float_t *val=db->GetEntry_f("VETO_calib_ARSTimeOffset",run);
     for(Int_t i=0;i<fNbChannelsVeto;i++){
       fmin[cp]=TMath::Max(Int_t(min[cp]-val[i]+0.5),0);
-      fmax[cp]=TMath::Min(Int_t(max[cp]-val[i]+0.5),128);
+      fmax[cp]=TMath::Min(Int_t(max[cp]-val[i]+0.5),110);
       cp++;
     }
   delete val;
@@ -187,14 +187,14 @@ void TARSBase::InitShapeAnalysis(char *opt)
   inifile>>fksp;
 
   fNbChannels=0;
-  // avoid hard-coded values
+  // Avoid hard-coded values
   // if(fgCaloWF) fNbChannels+=132; if(fgPAWF) fNbChannels+=100; if(fgVetoWF) fNbChannels+=57;
-  if(fgCaloWF) fNbChannels+=fNBChannelsCalo; if(fgPAWF) fNbChannels+=fNbChannelsPA; if(fgVetoWF) fNbChannels+=fNbChannelsVeto;  
+  if(fgCaloWF) fNbChannels+=fNbChannelsCalo; if(fgPAWF) fNbChannels+=fNbChannelsPA; if(fgVetoWF) fNbChannels+=fNbChannelsVeto;  
 
   //  TDVCSDB *db=new TDVCSDB("dvcs","clrlpc.jlab.org",3306,"munoz","");
   Int_t* valmin=new Int_t[fNbChannels];
   Int_t* valmax=new Int_t[fNbChannels];
-  for(Int_t i=0;i<fNbChannels;i++) {valmin[i]=0;valmax[i]=128;}
+  for(Int_t i=0;i<fNbChannels;i++) {valmin[i]=0;valmax[i]=110;}
   //InitAnalysisWindowDB(valmin,valmax,4000);
   delete valmin; delete valmax;
   if(!fchi20) fchi20=new Double_t[fNbChannels];
@@ -526,12 +526,12 @@ void TARSBase::InitMatrix2(TMatrixD** matrix2, Int_t k, Int_t j, Int_t i, char *
     
     for(Int_t i1=0;i1<8;i1++) fnval2[i1]=0.;
     for(Int_t s=fmin[i];s<fmax[i];s++){
-      if(s+k<128 && s+k>-1) fnval2[0]+=shaperef->GetValue(s+k)/fgpedsigma2[i][s];
+      if(s+k<110 && s+k>-1) fnval2[0]+=shaperef->GetValue(s+k)/fgpedsigma2[i][s];
       fnval2[2]+=1./fgpedsigma2[i][s];
-      if(s+k<128 && s+k>-1) fnval2[6]+=shaperef->GetValue(s+k)*shaperef->GetValue(s+k)/fgpedsigma2[i][s];
-      if(s+j<128 && s+j>-1) fnval2[1]+=shaperef->GetValue(s+j)/fgpedsigma2[i][s];
-      if(s+k<128 && s+k>-1 && s+j<128 && s+j>-1) fnval2[3]+=shaperef->GetValue(s+k)*shaperef->GetValue(s+j)/fgpedsigma2[i][s];
-      if(s+j<128 && s+j>-1) fnval2[4]+=shaperef->GetValue(s+j)*shaperef->GetValue(s+j)/fgpedsigma2[i][s];
+      if(s+k<110 && s+k>-1) fnval2[6]+=shaperef->GetValue(s+k)*shaperef->GetValue(s+k)/fgpedsigma2[i][s];
+      if(s+j<110 && s+j>-1) fnval2[1]+=shaperef->GetValue(s+j)/fgpedsigma2[i][s];
+      if(s+k<110 && s+k>-1 && s+j<110 && s+j>-1) fnval2[3]+=shaperef->GetValue(s+k)*shaperef->GetValue(s+j)/fgpedsigma2[i][s];
+      if(s+j<110 && s+j>-1) fnval2[4]+=shaperef->GetValue(s+j)*shaperef->GetValue(s+j)/fgpedsigma2[i][s];
     }	
 
     if(fgbfixed){
@@ -565,9 +565,9 @@ void TARSBase::InitMatrix1(TMatrixD** matrix1, Int_t k, Int_t i, char *opt, Bool
     
     for(Int_t i1=0;i1<4;i1++) fnval1[i1]=0.;
     for(Int_t s=fmin[i];s<fmax[i];s++){
-      if(s+k<128 && s+k>-1) fnval1[0]+=shaperef->GetValue(s+k)/fgpedsigma2[i][s];
+      if(s+k<110 && s+k>-1) fnval1[0]+=shaperef->GetValue(s+k)/fgpedsigma2[i][s];
       fnval1[1]+=1./fgpedsigma2[i][s];
-      if(s+k<128 && s+k>-1) fnval1[2]+=shaperef->GetValue(s+k)*shaperef->GetValue(s+k)/fgpedsigma2[i][s];
+      if(s+k<110 && s+k>-1) fnval1[2]+=shaperef->GetValue(s+k)*shaperef->GetValue(s+k)/fgpedsigma2[i][s];
     }
     fnval1[3]=fnval1[0];
     if(!matrix1[k+fmax[i]]) {
@@ -682,7 +682,7 @@ void TARSBase::Add2RunningShape(TDoubleArray *wave, Int_t channel, Double_t amp,
   if(option.Contains("LED")) refshape=(TDoubleArray*)fgRefShapesLED->UncheckedAt(channel);
 
   cout<<"Befofe :"<<endl;
-  for(Int_t i=0;i<128;i++) cout<<refshape->GetValue(i)<<" ";
+  for(Int_t i=0;i<110; i++) cout<<refshape->GetValue(i)<<" ";
   cout<<endl;
 
   if(time<fNbSamples && time>-(fNbSamples-1)){
@@ -719,7 +719,7 @@ void TARSBase::Add2RunningShape(TDoubleArray *wave, Int_t channel, Double_t amp,
   }
 
   cout<<"After :"<<endl;
-  for(Int_t i=0;i<128;i++) cout<<refshape->GetValue(i)<<" ";
+  for(Int_t i=0;i<110;i++) cout<<refshape->GetValue(i)<<" ";
   cout<<endl;
 
 }  

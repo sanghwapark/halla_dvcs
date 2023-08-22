@@ -31,7 +31,7 @@ TDVCSChain*     TDVCSGlobal::fgTree=0;
 
 TDVCSGlobal::TDVCSGlobal(int v):run(v)
 {
-  if(!wave) wave=new TARSWave(128);
+  if(!wave) wave=new TARSWave(110);
   //  wave->InitAnalysisWindowDB();
   fgTimeCorInit=kFALSE;
   caloev=0;
@@ -45,9 +45,9 @@ TDVCSGlobal::TDVCSGlobal(int v):run(v)
   run=9000;
   kWF=kTRUE;
   minanawin=0;//default
-  maxanawin=128;//default
+  maxanawin=110;//default
   fgNoTimeCor=kTRUE;
-  fgstatusCalo=new Bool_t[132];
+  fgstatusCalo=new Bool_t[1079];
   fgstatusPA=new Bool_t[100];
   fgstatusVeto=new Bool_t[57];
 }
@@ -86,7 +86,7 @@ void TDVCSGlobal::GetStatusCALO(void){
 
   TDVCSDB *db=new TDVCSDB("dvcs","clrlpc",3306,"munoz","");
   Int_t *val=db->GetEntry_i("CALO_status",run);
-  for(Int_t i=0;i<132;i++) fgstatusCalo[i]=val[i];
+  for(Int_t i=0;i<1079;i++) fgstatusCalo[i]=val[i];
   delete val;
   delete db;
 }
@@ -131,7 +131,7 @@ void TDVCSGlobal::UpdateTimeCor(void){
   for(Int_t i=0;i<16;i++) fgcor0[i]=coef[i];
   delete coef;
   coef=db->GetEntry_f("CALO_calib_ARSTimeOffset",run);
-  for(Int_t i=0;i<132;i++) fgcor1[i]=coef[i];
+  for(Int_t i=0;i<1079;i++) fgcor1[i]=coef[i];
   delete coef;
   coef=db->GetEntry_f("HRS_calib_S2Cor",run);
   for(Int_t i=0;i<16;i++) fgcor2[i]=coef[i];
@@ -151,7 +151,7 @@ void TDVCSGlobal::UpdateTimeCor(void){
 void TDVCSGlobal::Init(void){
   if(!caloev) caloev=new TCaloEvent();
   if(!ev) ev=new TDVCSEvent();
-  if(!wave) wave=new TARSWave(128);
+  if(!wave) wave=new TARSWave(110);
   //  wave->InitShapeAnalysis();
   if(!paev) paev=new TPAEvent();
   if(!vetoev) vetoev=new TVEvent();

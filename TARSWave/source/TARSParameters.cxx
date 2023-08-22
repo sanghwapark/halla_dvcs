@@ -26,8 +26,8 @@ The <A HREF=allcases/index.html> Minimizations cases </A>
 TARSParameters::TARSParameters()
 {
   //default constructor 
-  // 128 samples by default
-  fSize =128;
+  // 110 samples by default (updated for NPS)
+  fSize =110;
   Init();
   //Compute();
 }

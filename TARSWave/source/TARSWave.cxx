@@ -31,7 +31,7 @@ Double_t        *TARSWave::fgsol1=0;
 Double_t        *TARSWave::fgval2=0;
 Double_t        *TARSWave::fgsol2=0;
 Int_t        TARSWave::fminchi2=0;
-Int_t        TARSWave::fmaxchi2=128;
+Int_t        TARSWave::fmaxchi2=110;
 Bool_t           TARSWave::fgIsInitShapeAnalysis = kFALSE;
 Bool_t           TARSWave::fgIsInitShapeAnalysisLED = kFALSE;
 TDoubleArray    *TARSWave::fFit=0;
@@ -64,7 +64,9 @@ Double_t        *TARSWave::fgt=0;
   if(!fgPedIsInit) InitPedDB(run);
   fSubstracted=1;
   Int_t samples=this->GetNbSamples();
-  samples=128;
+
+  // Don't override this 
+  // samples=128;
 
   TString dect=dec;
   for(int i=0;i<samples;i++){
@@ -91,11 +93,11 @@ Double_t        *TARSWave::fgt=0;
   if(!fgPedIsInit) InitPed(run);
   fSubstracted=1;
   Int_t samples=this->GetNbSamples();
-  samples=128;
   for(int i=0;i<samples;i++){
-    if(ch<132) fData->SetValue(i,fWave->GetValue(i)-fgPedCalo[chan]->GetValue(i));
-    if(ch>131 && ch<232) fData->SetValue(i,fWave->GetValue(i)-fgPedPA[chan]->GetValue(i));
-    if(ch>231) fData->SetValue(i,fWave->GetValue(i)-fgPedVeto[chan]->GetValue(i));
+    if(ch<fNbChannelsCalo) fData->SetValue(i,fWave->GetValue(i)-fgPedCalo[chan]->GetValue(i));
+    // We probably don't need the followings, keeping it for now
+    if(ch>fNbChannelsCalo-1 && ch<fNbChannelsCalo+fNbChannelsPA) fData->SetValue(i,fWave->GetValue(i)-fgPedPA[chan]->GetValue(i));
+    if(ch>fNbChannelsCalo+fNbChannelsPA-1) fData->SetValue(i,fWave->GetValue(i)-fgPedVeto[chan]->GetValue(i));
   }
 }
 
@@ -163,7 +165,7 @@ Double_t        *TARSWave::fgt=0;
   for(Int_t i=0;i<fNbChannelsCalo;i++){
     if(i%10==0) cout<<i<<"/"<<fNbChannelsCalo<<endl;
     TString name=("CALO_calib_ARSPed");name+=i;
-    Float_t* coef=new Float_t[132];
+    Float_t* coef=new Float_t[fNbChannelsCalo];
     fgPedCalo[i]=new TDoubleArray(samples);
     for(Int_t j=0;j<samples;j++) {fped>>coef[j];fgPedCalo[i]->SetValue(j,coef[j]);}
     delete coef;
@@ -205,7 +207,7 @@ Int_t TARSWave:: Decode(Int_t * fBuffer)
 {
   Int_t  index=0;
   Int_t chan,voie,valeur;
-  Int_t width=128;
+  Int_t width=110;
   // cout<<fBuffer<<endl;
   if (fBuffer!=0)
   {
@@ -224,7 +226,7 @@ Int_t TARSWave:: Decode(Int_t * fBuffer)
 #ifdef DEBUG
       //cout<<hex<<fBuffer[index]<<" "<<fBuffer[index+1]<<":"<<(fBuffer[index+1]!=0x0000bad2)<<0x0000bad2<<endl;
 #endif
-      if ((fBuffer[index+1]!=0x00000bad)&&index<128&&(fBuffer[index+1]!=0x0000bad2))
+      if ((fBuffer[index+1]!=0x00000bad)&&index<110&&(fBuffer[index+1]!=0x0000bad2))
 	{
 	for (int s=0;(s<width/2);s++)
 		  {
@@ -250,7 +252,7 @@ Int_t TARSWave:: Decode(const int * fBuffer)
 {
   Int_t  index=0;
   Int_t chan,voie,valeur;
-  Int_t width=128;
+  Int_t width=110;
   // cout<<fBuffer<<endl;
   if (fBuffer!=0)
   {
@@ -269,7 +271,7 @@ Int_t TARSWave:: Decode(const int * fBuffer)
 #ifdef DEBUG
       //cout<<hex<<fBuffer[index]<<" "<<fBuffer[index+1]<<":"<<(fBuffer[index+1]!=0x0000bad2)<<0x0000bad2<<endl;
 #endif
-      if ((fBuffer[index+1]!=0x00000bad)&&index<128&&(fBuffer[index+1]!=0x0000bad2))
+      if ((fBuffer[index+1]!=0x00000bad)&&index<110&&(fBuffer[index+1]!=0x0000bad2))
 	{
 	for (int s=0;(s<width/2);s++)
 		  {
@@ -472,6 +474,7 @@ Double_t TARSWave::GetARSCor(void)
 {
   Double_t cor=0.;
 
+  // FIXME: Commented out for now
   /*
     if(fNbChannel<fNbChannelsCalo && fgCaloWF==kTRUE) cor-=gdvcs->GetARSCor(fNbChannel);
     if(fNbChannel<fNbChannelsPA && fgPAWF==kTRUE && fgCaloWF==kFALSE) cor-=gdvcs->GetARSCorPA(fNbChannel);
@@ -559,6 +562,7 @@ Int_t TARSWave::Analyze(char *opt, Double_t *rawtimes)
   Double_t fk1maxini=fk1max, fk1minini=fk1min, fk1max2ini=fk1max2, fk1min2ini=fk1min2, fk2maxini=fk2max, fk2minini=fk2min;
   Double_t fminchi2ini=fminchi2, fmaxchi2ini=fmaxchi2; 
   
+  // FIXME: Commented out for now
   /*
   if(gdvcs->TimeCorIsInit()) {
     Double_t cor=gdvcs->GetTimeCor();
@@ -697,8 +701,8 @@ TDoubleArray* TARSWave::GetFit(char* opt)
     }
     for(Int_t i=0;i<fNbSamples;i++){
       Double_t val=b;
-      if(i+t1>-1 && i+t1<128) val+=ref->GetValue(i+t1)*a1;
-      if(i+t2>-1 && i+t2<128) val+=ref->GetValue(i+t2)*a2;
+      if(i+t1>-1 && i+t1<fNbSamples) val+=ref->GetValue(i+t1)*a1;
+      if(i+t2>-1 && i+t2<fNbSamples) val+=ref->GetValue(i+t2)*a2;
       fFit->SetValue(i,val);
     }
     return fFit;
@@ -762,8 +766,8 @@ Int_t TARSWave::Fit2Pulses(Double_t& a1, Double_t& a2, Double_t& t1, Double_t& t
       for(Int_t i=0;i<3;i++) fgval2[i]=0.;
       for(Int_t i=fmin[fNbChannel];i<fmax[fNbChannel];i++){
 	fgval2[0]+=array->GetValue(i)/fgpedsigma2[fNbChannel][i];
-	if(i+m<128 && i+m>-1) fgval2[1]+=array->GetValue(i)*ref->GetValue(i+m)/fgpedsigma2[fNbChannel][i];
-	if(i+k<128 && i+k>-1) fgval2[2]+=array->GetValue(i)*ref->GetValue(i+k)/fgpedsigma2[fNbChannel][i];
+	if(i+m<fNbSamples && i+m>-1) fgval2[1]+=array->GetValue(i)*ref->GetValue(i+m)/fgpedsigma2[fNbChannel][i];
+	if(i+k<fNbSamples && i+k>-1) fgval2[2]+=array->GetValue(i)*ref->GetValue(i+k)/fgpedsigma2[fNbChannel][i];
       }
       if(fgbfixed) fgval2[0]=0.;
       fgX2->SetMatrixArray(fgval2);
@@ -876,7 +880,7 @@ void TARSWave::Fit1Pulse(Double_t& a, Double_t& t, Double_t& b, Double_t& chi2, 
     for(Int_t i=0;i<2;i++) fgval1[i]=0.;
     for(Int_t i=fmin[fNbChannel];i<fmax[fNbChannel];i++){
       fgval1[0]+=array->GetValue(i)/fgpedsigma2[fNbChannel][i];
-      if(i+k<128 && i+k>-1) fgval1[1]+=array->GetValue(i)*ref->GetValue(i+k)/fgpedsigma2[fNbChannel][i];
+      if(i+k<fNbSamples && i+k>-1) fgval1[1]+=array->GetValue(i)*ref->GetValue(i+k)/fgpedsigma2[fNbChannel][i];
     }
     fgX1->SetMatrixArray(fgval1);
     if(option.Contains("data")) fgP1->Mult(*fgM1[fNbChannel][k+fmax[fNbChannel]],*fgX1);
