@@ -158,7 +158,7 @@ void TARSBase::InitShapeAnalysis(char *opt)
   Double_t dum=0;
   TString option=opt;
   TString arsfile(getenv("DVCS_SOFT"));
-  arsfile+="/initdata/arsbase.txt";
+  arsfile+="/initdata/npsbase.txt";
   ifstream inifile(arsfile.Data());
   inifile>>fNbChannelsCalo;
   inifile>>fNbSamples;
@@ -229,6 +229,8 @@ void TARSBase::InitShapeAnalysis(char *opt)
       fgM1[i][k]=0;
     }
   }
+  // FIXME: this is somewhat redundant. 
+  // In SetFirstWindow, it set fk1min = fk1min, and fk1max=fk1max, basically.
   SetFirstWindow(fk1min,fk1max,"data");
   SetSecondWindow(fk1min2,fk1max2,fk2min,fk2max,"data");
   fgIsInitShapeAnalysisBase=kTRUE;
