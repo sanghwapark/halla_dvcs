@@ -551,6 +551,17 @@ Int_t TARSWave::Analyze(char *opt, Double_t *rawtimes)
   Double_t fk1maxini=fk1max, fk1minini=fk1min, fk1max2ini=fk1max2, fk1min2ini=fk1min2, fk2maxini=fk2max, fk2minini=fk2min;
   Double_t fminchi2ini=fminchi2, fmaxchi2ini=fmaxchi2; 
   
+  // FIXME: Print values
+  cout << fk1min << endl;
+  cout << fk1max << endl;
+  cout << fk1min2 << endl;
+  cout << fk1max2 << endl;
+  cout << fk2min << endl;
+  cout << fk2max << endl;
+  cout << fminchi2 << endl;
+  cout << fmaxchi2 << endl;
+
+
   // FIXME: Commented out for now
   /*
   if(gdvcs->TimeCorIsInit()) {
