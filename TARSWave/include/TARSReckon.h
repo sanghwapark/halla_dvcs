@@ -51,8 +51,10 @@ class TReckon:public TObject
   void  BaseSub();//soustraction de la base et profil de l'evenement
   void  MakeRunningBase(int & );//construit la running base
  protected:
-  double fData[2*128];   //  a_x[i ]==>  da_[i+128] data signal
-  double fRec[2*128];   // reconstructed shape array  
+  // FIXME: avoid using hard-coded values
+  // Replace # of samples 128->110 for now
+  double fData[2*110];   //  a_x[i ]==>  da_[i+128] data signal
+  double fRec[2*110];   // reconstructed shape array  
   double fThreshold;// Threshold on the first case background only ( If there is a pulse the b must be lower )
   //variables d'initialisations
   TReckon_Ini *fIni;//object holding initialisation parameter

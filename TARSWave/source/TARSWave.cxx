@@ -53,7 +53,10 @@ Double_t        *TARSWave::fgt=0;
   for(int i=0;i<fgSize;i++){
     //cout<<i<<" "<<fWave<<" "<<fPedestal<<endl;
     //cout<<i<<" "<<(*fWave)[i]-fgARSParameters[ch].GetBase(i+fgSize)<<endl;
+
+    // i+fgSize: Skip the init values 
     fData->SetValue(i,(*fWave)[i]-fgARSParameters[ch].GetBase(i+fgSize)) ;
+
     //   cout<<(*fRaw)[i]<<"-"<<fgARSParameters[fNumber].GetBase(i)<<"="<<(*fData)[i]<<endl;
   }
 }
@@ -65,14 +68,9 @@ Double_t        *TARSWave::fgt=0;
   fSubstracted=1;
   Int_t samples=this->GetNbSamples();
 
-  // Don't override this 
-  // samples=128;
-
   TString dect=dec;
   for(int i=0;i<samples;i++){
     if(dect.Contains("CALO")) fData->SetValue(i,fWave->GetValue(i)-fgPedCalo[chan]->GetValue(i));
-    if(dect.Contains("PA")) fData->SetValue(i,fWave->GetValue(i)-fgPedPA[chan]->GetValue(i));
-    if(dect.Contains("Veto")) fData->SetValue(i,fWave->GetValue(i)-fgPedVeto[chan]->GetValue(i));
   }
 }
 
@@ -94,10 +92,7 @@ Double_t        *TARSWave::fgt=0;
   fSubstracted=1;
   Int_t samples=this->GetNbSamples();
   for(int i=0;i<samples;i++){
-    if(ch<fNbChannelsCalo) fData->SetValue(i,fWave->GetValue(i)-fgPedCalo[chan]->GetValue(i));
-    // We probably don't need the followings, keeping it for now
-    if(ch>fNbChannelsCalo-1 && ch<fNbChannelsCalo+fNbChannelsPA) fData->SetValue(i,fWave->GetValue(i)-fgPedPA[chan]->GetValue(i));
-    if(ch>fNbChannelsCalo+fNbChannelsPA-1) fData->SetValue(i,fWave->GetValue(i)-fgPedVeto[chan]->GetValue(i));
+    if(ch<fNbChannels) fData->SetValue(i,fWave->GetValue(i)-fgPedCalo[chan]->GetValue(i));
   }
 }
 
@@ -109,7 +104,6 @@ Double_t        *TARSWave::fgt=0;
 //   cin>>username;
 //   cout<<"If you get a crash now, remeber to forward port 3306 to a valid database"<<endl;
   TDVCSDB *db=new TDVCSDB("dvcs","clrlpc",3306,"munoz","");
-//   TDVCSDB *db=new TDVCSDB("dvcs","clrlpc",3306,(char*)username.Data());
   Int_t samples=GetNbSamples();
   fgPedCalo=new TDoubleArray*[fNbChannelsCalo];
   fgPedPA=new TDoubleArray*[fNbChannelsPA];
@@ -123,6 +117,8 @@ Double_t        *TARSWave::fgt=0;
     for(Int_t j=0;j<samples;j++) fgPedCalo[i]->SetValue(j,coef[j]);
     delete coef;
   }
+
+  // FIXME: Keeping it for now, but remove later!
   for(Int_t i=0;i<fNbChannelsPA;i++){
     if(i%10==0) cout<<i<<"/"<<fNbChannelsPA<<endl;
     TString name=("PA_calib_ARSPed");name+=i;
@@ -170,6 +166,8 @@ Double_t        *TARSWave::fgt=0;
     for(Int_t j=0;j<samples;j++) {fped>>coef[j];fgPedCalo[i]->SetValue(j,coef[j]);}
     delete coef;
   }
+
+  // FIXME: Keeping it for now, but remove later!
   for(Int_t i=0;i<fNbChannelsPA;i++){
     if(i%10==0) cout<<i<<"/"<<fNbChannelsPA<<endl;
     TString name=("PA_calib_ARSPed");name+=i;
@@ -207,7 +205,7 @@ Int_t TARSWave:: Decode(Int_t * fBuffer)
 {
   Int_t  index=0;
   Int_t chan,voie,valeur;
-  Int_t width=110;
+  Int_t width=fNbSamples;
   // cout<<fBuffer<<endl;
   if (fBuffer!=0)
   {
@@ -252,7 +250,7 @@ Int_t TARSWave:: Decode(const int * fBuffer)
 {
   Int_t  index=0;
   Int_t chan,voie,valeur;
-  Int_t width=110;
+  Int_t width=fNbSamples;
   // cout<<fBuffer<<endl;
   if (fBuffer!=0)
   {
@@ -320,19 +318,13 @@ else return -1;
 
 TARSWave::TARSWave()
 {
-  //cout<<"TARSWave default constructor "<<this<<endl;
+  // Default constructor
 
-  //  fWave = new TClonesArray("TDouble");
-  //  fWave->BypassStreamer(kFALSE);
   fgWave=new TDoubleArray();
   fWave=fgWave;
   fgData = new TDoubleArray(fgSize);
   fData=fgData;
   fNbChannel=0;
-  //  fgReso=5;
-//    for(Int_t i=0;i<128;i++){
-//      AddValue(i,0.);
-//    }
   fH=0;
   fCanvas=0;
   fPedestal=0;
@@ -554,10 +546,7 @@ Int_t TARSWave::Analyze(char *opt, Double_t *rawtimes)
     //////////////////////////////
   }
 
-//   if(!fa) fa=new Double_t[2];
-//   if(!ft) ft=new Double_t[2];
-
-//We correct timing of WF analysis windows
+  //We correct timing of WF analysis windows
   
   Double_t fk1maxini=fk1max, fk1minini=fk1min, fk1max2ini=fk1max2, fk1min2ini=fk1min2, fk2maxini=fk2max, fk2minini=fk2min;
   Double_t fminchi2ini=fminchi2, fmaxchi2ini=fmaxchi2; 
@@ -582,29 +571,36 @@ Int_t TARSWave::Analyze(char *opt, Double_t *rawtimes)
   */
   
   if(rawtimes) {for(Int_t i=0;i<6;i++) rawtimes[i]=-999;}
-  fAnalyzed=kTRUE;
 
-//   cout<<"Checks "<<fNbChannel<<endl;
-//   cout<<"First window "<<fk1min<<" "<<fk1max<<endl;
-//   cout<<"Second window "<<fk1min2<<" "<<fk1max2<<" "<<fk2min<<" "<<fk2max<<endl;
-//   cout<<"Chi2window "<<fminchi2<<" "<<fmaxchi2<<endl;
-//   cout<<"Resolution "<<fgReso[fNbChannel]<<endl;
-//   cout<<"Analysis window "<<fmin[fNbChannel]<<" "<<fmax[fNbChannel]<<endl;
-//   cout<<"Cor "<<gdvcs->GetTimeCor()<<" "<<gdvcs->GetARSCor(fNbChannel)<<endl;
+  //   fAnalyzed=kTRUE;
 
+  //   cout<<"Checks "<<fNbChannel<<endl;
+  //   cout<<"First window "<<fk1min<<" "<<fk1max<<endl;
+  //   cout<<"Second window "<<fk1min2<<" "<<fk1max2<<" "<<fk2min<<" "<<fk2max<<endl;
+  //   cout<<"Chi2window "<<fminchi2<<" "<<fmaxchi2<<endl;
+  //   cout<<"Resolution "<<fgReso[fNbChannel]<<endl;
+  //   cout<<"Analysis window "<<fmin[fNbChannel]<<" "<<fmax[fNbChannel]<<endl;
+  //   cout<<"Cor "<<gdvcs->GetTimeCor()<<" "<<gdvcs->GetARSCor(fNbChannel)<<endl;
+
+
+  // Baseline fitting:
   Fit0Pulse(fb,fchi2,option.Data());
   //cout<<fchi2<<endl;
+  
   if(fchi2<fchi20[fNbChannel]){
-    // cout<<"There are no pulses"<<endl;
+    //cout<<"There are no pulses"<<endl;
     //cout<<fchi2<<endl;
     fNPulse=0;
   }else{
+
+    // One pulse fitting:
     Fit1Pulse(fa[0],ft[0],fb,fchi2,option.Data(),rawtimes);
     if(fchi2<fchi21[fNbChannel]){
-      // cout<<"There is 1 pulse"<<endl;
+      //cout<<"There is 1 pulse"<<endl;
       //cout<<fchi2<<endl;
       fNPulse=1;
     }else{
+      // Attempt to do two pulse fitting, only for data
       if(option.Contains("data")){
 	Int_t test=Fit2Pulses(fa[0],fa[1],ft[0],ft[1],fb,fchi2,option.Data(),rawtimes);
 	if(test==1) {fNPulse=1;
@@ -612,11 +608,11 @@ Int_t TARSWave::Analyze(char *opt, Double_t *rawtimes)
 	return 1;
 	}
 	if(fchi2<fchi22[fNbChannel]){
-	  //	  cout<<"There are 2 pulses"<<endl;
+	  // cout<<"There are 2 pulses"<<endl;
 	  // cout<<fchi2<<endl;
 	  fNPulse=2;
 	}else{
-	  //	  cout<<"There are MORE than 2 pulses"<<endl;
+	  // cout<<"There are MORE than 2 pulses"<<endl;
 	  fNPulse=3;
 	}
       }else{
@@ -625,7 +621,8 @@ Int_t TARSWave::Analyze(char *opt, Double_t *rawtimes)
       }
     }
   }
-  //  fAnalyzed=kTRUE;
+
+  fAnalyzed=kTRUE;
   fk1max=fk1maxini; fk1min=fk1minini; fk1max2=fk1max2ini; fk1min2=fk1min2ini; fk2max=fk2maxini; fk2min=fk2minini; fmaxchi2=fmaxchi2ini;fminchi2=fminchi2ini;
   return 0;
 }

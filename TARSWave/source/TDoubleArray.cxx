@@ -327,7 +327,7 @@ void TDoubleArray::Draw(TPad * pad, Float_t min, Float_t max, char* opt)
   }
 #ifndef DOUBLE_WITH_CLONESARRAY
   Int_t length=fN;
-  length=128;
+  length=110;
 #else
   Int_t length=fData->GetLast()+1;
 #endif
@@ -538,7 +538,7 @@ void TDoubleArray::Init(Int_t length)
 
 Double_t  TDoubleArray::FindValue(Double_t thres)
     {
-      Int_t lim=128;
+      Int_t lim=110;
 #ifndef DOUBLE_WITH_CLONESARRAY
       if (fN>lim) lim=fN;
 #else

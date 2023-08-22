@@ -38,7 +38,7 @@ class TDoubleArray: public TObject
   TDoubleArray(int,Double_t *);
   TDoubleArray(const TDoubleArray &);
   ~TDoubleArray();
-  void Init(Int_t length=128);
+  void Init(Int_t length=110);
    void Draw(char * opt);
   void Draw(TPad *pad=0,Float_t min=-10000, Float_t max=-10000,char* opt="");
   void Clear();

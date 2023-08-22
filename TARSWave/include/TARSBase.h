@@ -103,7 +103,6 @@ class TARSBase : public TObject
   virtual void InitShapeAnalysisLED(char *opt="data");
   virtual void Print(char* opt="");
   TARSParameters * GetParam(int i){return &fgARSParameters[i];};
-  void ActivateOnly(char *opt);
   void SetWarnings(Bool_t val) { fgWarnings = val; };
   void SetErrors(Bool_t val) { fgErrors = val; };
   // TARSParameters method

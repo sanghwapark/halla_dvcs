@@ -29,8 +29,8 @@ ClassImp(TARSBase)
 UInt_t           TARSBase::fgSize=110; // FIXME: #samples for NPS channels
 Int_t            TARSBase::fNbChanels=-1;
 UInt_t           TARSBase::fNbChannelsCalo=0;
-UInt_t           TARSBase::fNbChannelsPA=0;
-UInt_t           TARSBase::fNbChannelsVeto=0;
+UInt_t           TARSBase::fNbChannelsPA=0; // FIXME: Remove
+UInt_t           TARSBase::fNbChannelsVeto=0; // FIXME: Remove
 UInt_t           TARSBase::fNbChannels=0;
 Int_t            TARSBase::fNbSamples=-1;
 Int_t            TARSBase::fksp=-1;
@@ -72,8 +72,8 @@ Double_t**       TARSBase::fgRunningwei=0;
 Bool_t           TARSBase::fgRunningIsInit=kFALSE;
 Bool_t           TARSBase::fgIsInitShapeAnalysisBase=kFALSE;
 Bool_t           TARSBase::fgCaloWF=kTRUE;
-Bool_t           TARSBase::fgPAWF=kTRUE;
-Bool_t           TARSBase::fgVetoWF=kTRUE;
+Bool_t           TARSBase::fgPAWF=kFALSE; // FIXME: Remove
+Bool_t           TARSBase::fgVetoWF=kFALSE; // FIXME: Remove
 Bool_t           TARSBase::fgbfixed=kFALSE;
 Int_t*            TARSBase::fgReso=0;
 Int_t            TARSBase::fminfixed=0;
@@ -120,31 +120,14 @@ void TARSBase::InitAnalysisWindowDB(Int_t* min, Int_t* max, Int_t run)
   TDVCSDB *db=new TDVCSDB("dvcs","clrlpc.jlab.org",3306,"munoz","");
   if(fgCaloWF){
     Float_t *val=db->GetEntry_f("CALO_calib_ARSTimeOffset",run);
-    for(Int_t i=0;i<fNbChannelsCalo;i++){
+    for(Int_t i=0;i<fNbChannels;i++){
       fmin[cp]=TMath::Max(Int_t(min[cp]-val[i]+0.5),0);
-      fmax[cp]=TMath::Min(Int_t(max[cp]-val[i]+0.5),110);
+      fmax[cp]=TMath::Min(Int_t(max[cp]-val[i]+0.5),fNbSamples);
       cp++;
     }
   delete val;
   }
-  if(fgPAWF){
-    Float_t *val=db->GetEntry_f("PA_calib_ARSTimeOffset",run);
-    for(Int_t i=0;i<fNbChannelsPA;i++){
-      fmin[cp]=TMath::Max(Int_t(min[cp]-val[i]+0.5),0);
-      fmax[cp]=TMath::Min(Int_t(max[cp]-val[i]+0.5),110);
-      cp++;
-    }
-  delete val;
-  }
-  if(fgVetoWF){
-    Float_t *val=db->GetEntry_f("VETO_calib_ARSTimeOffset",run);
-    for(Int_t i=0;i<fNbChannelsVeto;i++){
-      fmin[cp]=TMath::Max(Int_t(min[cp]-val[i]+0.5),0);
-      fmax[cp]=TMath::Min(Int_t(max[cp]-val[i]+0.5),110);
-      cp++;
-    }
-  delete val;
-  }
+
   delete db;
 }
 
@@ -155,15 +138,16 @@ void TARSBase::InitAnalysisWindowDB(Int_t* min, Int_t* max, Int_t run)
 }
 
 //____________________________________________________________________________                                                                                                                                
+// FIXME: I think we don't quite need this now
+/*
 void TARSBase::ActivateOnly(char *opt)
 {
 
   TString option=opt;
   if(!option.Contains("CALO")) fgCaloWF=kFALSE;
-  if(!option.Contains("PA")) fgPAWF=kFALSE;
-  if(!option.Contains("Veto")) fgVetoWF=kFALSE;
 
 }
+*/
 
 //____________________________________________________________________________
 void TARSBase::InitShapeAnalysis(char *opt)
@@ -176,41 +160,29 @@ void TARSBase::InitShapeAnalysis(char *opt)
   TString arsfile(getenv("DVCS_SOFT"));
   arsfile+="/initdata/arsbase.txt";
   ifstream inifile(arsfile.Data());
-  inifile>>dum;
   inifile>>fNbChannelsCalo;
-  inifile>>fNbChannelsPA;
-  inifile>>fNbChannelsVeto;
   inifile>>fNbSamples;
-  inifile>>dum;
-  inifile>>dum;
-  inifile>>dum;
   inifile>>fksp;
 
+  // FIXME: Override class input parameter
   fNbChannels=0;
-  // Avoid hard-coded values
-  // if(fgCaloWF) fNbChannels+=132; if(fgPAWF) fNbChannels+=100; if(fgVetoWF) fNbChannels+=57;
-  if(fgCaloWF) fNbChannels+=fNbChannelsCalo; if(fgPAWF) fNbChannels+=fNbChannelsPA; if(fgVetoWF) fNbChannels+=fNbChannelsVeto;  
+  if(fgCaloWF) fNbChannels += fNbChannelsCalo;
 
-  //  TDVCSDB *db=new TDVCSDB("dvcs","clrlpc.jlab.org",3306,"munoz","");
+  // FIXME: disable DB part (this method should remain without using db I think)
+  // TDVCSDB *db=new TDVCSDB("dvcs","clrlpc.jlab.org",3306,"munoz","");
   Int_t* valmin=new Int_t[fNbChannels];
   Int_t* valmax=new Int_t[fNbChannels];
-  for(Int_t i=0;i<fNbChannels;i++) {valmin[i]=0;valmax[i]=110;}
-  //InitAnalysisWindowDB(valmin,valmax,4000);
+  for(Int_t i=0;i<fNbChannels;i++) {valmin[i]=0;valmax[i]=fNbSamples;}
+  // FIXME: disable DB part (this method should remain without using db I think)
+  // InitAnalysisWindowDB(valmin,valmax,4000);
   delete valmin; delete valmax;
   if(!fchi20) fchi20=new Double_t[fNbChannels];
   if(!fchi21) fchi21=new Double_t[fNbChannels];
   if(!fchi22) fchi22=new Double_t[fNbChannels];
 
-  //if(fNbChannels==-1) 
-//     fNbChannels=dum;
-
-//     fNbChannels=0;
-//    if(fgCaloWF) fNbChannels+=132; if(fgPAWF) fNbChannels+=100; if(fgVetoWF) fNbChannels+=57;
-
-
-  TString arsfile2(getenv("DVCS_SOFT"));
-  arsfile2+="/initdata/refshape.txt";
-  ifstream refshape(arsfile2.Data());
+  // FIXME: what to do if one is given other options?
+  // FIXME: fk1=7? this variable doesn't seem to be used anywhere else
+  // FIXME: avoid using hard-coded parameters, set them in npsbase.txt
   if(option.Contains("data")){
     fk1=7;
     fk1min=-127;
@@ -223,22 +195,26 @@ void TARSBase::InitShapeAnalysis(char *opt)
   }
   
   InitPedSigma();
-
-  //  cout<<"Pedestals should be initialized"<<endl;
   
-  Double_t val=0.;
-  
+  // Init matrix
   fgM1=new TMatrixD**[fNbChannels];
   fgM2=new TMatrixD***[fNbChannels];
   
+  // one pulse fitting coeff: 4(2x2) for a1 and b
+  // two pulse fitting coeff: 9(3x3) coeff for a1, a2, b
   if(!fnval1) fnval1=new Double_t[4];
   if(!fnval2) fnval2=new Double_t[9];
   
   for(Int_t ii1=0;ii1<4;ii1++) fnval1[ii1]=0.;
   for(Int_t ii1=0;ii1<9;ii1++) fnval2[ii1]=0.;
-  
+
+  // Reference shape  
+  TString arsfile2(getenv("DVCS_SOFT"));
+  arsfile2+="/initdata/refshape.txt";
+  ifstream refshape(arsfile2.Data());
   fgRefShapes=new TClonesArray("TDoubleArray",fNbChannels);
   TClonesArray &shapes=*fgRefShapes;
+  Double_t val=0.;
   for(Int_t i=0;i<fNbChannels;i++){
     fgM1[i]=new TMatrixD*[2*fNbSamples+1];
     fgM2[i]=new TMatrixD**[2*fNbSamples+1];
@@ -267,7 +243,7 @@ void TARSBase::InitShapeAnalysisDB(Int_t run, char *opt)
   TString option=opt;
 
   fNbChannels=0;
-  if(fgCaloWF) fNbChannels+=132; if(fgPAWF) fNbChannels+=100; if(fgVetoWF) fNbChannels+=57;
+  if(fgCaloWF) fNbChannels+=1080; // FIXME: set the values externally, instead of using hard-coded value
   InitPedSigmaDB(run);
  
   if(!fgReso) fgReso=new Int_t[fNbChannels];
@@ -278,29 +254,13 @@ void TARSBase::InitShapeAnalysisDB(Int_t run, char *opt)
   TDVCSDB *db=new TDVCSDB("dvcs","clrlpc.jlab.org",3306,"munoz","");
 
   Int_t cp2=0;
-  for(Int_t i=0;i<fNbChannelsCalo+fNbChannelsPA+fNbChannelsVeto;i++){
+  for(Int_t i=0;i<fNbChannels; i++) {
+    Int_t vmin=db->GetEntry_i("CALO_calib_WFAnaWinMin",run,0);
+    Int_t vmax=db->GetEntry_i("CALO_calib_WFAnaWinMax",run,0);
+    Int_t reso1=db->GetEntry_i("CALO_calib_WFReso",run,i);
+    valmin[cp2]=vmin; valmax[cp2]=vmax; reso[cp2]=reso1;
     
-    if((i<fNbChannelsCalo && fgCaloWF) || (i<(fNbChannelsCalo+fNbChannelsPA)&&i>(fNbChannelsCalo-1)&&fgPAWF) || (i>(fNbChannelsCalo+fNbChannelsPA-1)&&fgVetoWF)){
-      if(i<fNbChannelsCalo){
-	Int_t vmin=db->GetEntry_i("CALO_calib_WFAnaWinMin",run,0);
-	Int_t vmax=db->GetEntry_i("CALO_calib_WFAnaWinMax",run,0);
-	Int_t reso1=db->GetEntry_i("CALO_calib_WFReso",run,i);
-	valmin[cp2]=vmin; valmax[cp2]=vmax; reso[cp2]=reso1;
-      }
-      if(i<(fNbChannelsCalo+fNbChannelsPA)&&i>(fNbChannelsCalo-1)){
-	Int_t vmin=db->GetEntry_i("PA_calib_WFAnaWinMin",run,0);
-	Int_t vmax=db->GetEntry_i("PA_calib_WFAnaWinMax",run,0);
-	Int_t reso2=db->GetEntry_i("PA_calib_WFReso",run,i-fNbChannelsCalo);
-	valmin[cp2]=vmin; valmax[cp2]=vmax; reso[cp2]=reso2;
-      }
-      if(i>(fNbChannelsCalo+fNbChannelsPA-1)&&i<(fNbChannelsCalo+fNbChannelsPA+fNbChannelsVeto)){
-	Int_t vmin=db->GetEntry_i("VETO_calib_WFAnaWinMin",run,0);
-	Int_t vmax=db->GetEntry_i("VETO_calib_WFAnaWinMax",run,0);
-	Int_t reso3=db->GetEntry_i("VETO_calib_WFReso",run,i-fNbChannelsCalo-fNbChannelsPA);
-	valmin[cp2]=vmin;valmax[cp2]=vmax; reso[cp2]=reso3;
-      }
-      cp2++;
-    }
+    cp2++;
   }
    
   InitAnalysisWindowDB(valmin,valmax,run);
@@ -319,53 +279,35 @@ void TARSBase::InitShapeAnalysisDB(Int_t run, char *opt)
 
   Int_t cp=0;
 
-  for(Int_t i=0;i<fNbChannelsCalo+fNbChannelsPA+fNbChannelsVeto;i++){
+  for(Int_t i=0;i<fNbChannels; i++) {
     
-    if((i<fNbChannelsCalo && fgCaloWF) || (i<(fNbChannelsCalo+fNbChannelsPA)&&i>(fNbChannelsCalo-1)&&fgPAWF) || (i>(fNbChannelsCalo+fNbChannelsPA-1)&&fgVetoWF)){
-
-      if(option.Contains("data")) refshape=(TDoubleArray*)fgRefShapes->UncheckedAt(cp);
-      if(option.Contains("LED")) refshape=(TDoubleArray*)fgRefShapesLED->UncheckedAt(cp);
-      Float_t *coef=0;
+    if(option.Contains("data")) refshape=(TDoubleArray*)fgRefShapes->UncheckedAt(cp);
+    if(option.Contains("LED")) refshape=(TDoubleArray*)fgRefShapesLED->UncheckedAt(cp);
+    Float_t *coef=0;
       
-      if(i<fNbChannelsCalo){
-	fchi20[cp]=db->GetEntry_d("CALO_calib_WFChi20",run,i);
-	fchi21[cp]=db->GetEntry_d("CALO_calib_WFChi21",run,i);
-	fchi22[cp]=db->GetEntry_d("CALO_calib_WFChi22",run,i);
-	TString name("CALO_calib_ARSRefShape");name+=i;
-	coef=db->GetEntry_f(name.Data(),run);
-      }
-      if(i<(fNbChannelsCalo+fNbChannelsPA)&&i>(fNbChannelsCalo-1)){
-	fchi20[cp]=db->GetEntry_d("PA_calib_WFChi20",run,i-fNbChannelsCalo);
-	fchi21[cp]=db->GetEntry_d("PA_calib_WFChi21",run,i-fNbChannelsCalo);
-	fchi22[cp]=db->GetEntry_d("PA_calib_WFChi22",run,i-fNbChannelsCalo);
-	TString name("PA_calib_ARSRefShape");name+=i-fNbChannelsCalo;
-	coef=db->GetEntry_f(name.Data(),run);
-      }
-      if(i>(fNbChannelsCalo+fNbChannelsPA-1)&&i<(fNbChannelsCalo+fNbChannelsPA+fNbChannelsVeto)){
-	fchi20[cp]=db->GetEntry_d("VETO_calib_WFChi20",run,i-fNbChannelsCalo-fNbChannelsPA);
-	fchi21[cp]=db->GetEntry_d("VETO_calib_WFChi21",run,i-fNbChannelsCalo-fNbChannelsPA);
-	fchi22[cp]=db->GetEntry_d("VETO_calib_WFChi22",run,i-fNbChannelsCalo-fNbChannelsPA);
-	TString name("VETO_calib_ARSRefShape");name+=i-fNbChannelsCalo-fNbChannelsPA;
-	coef=db->GetEntry_f(name.Data(),run);
-      }
-      
-      for(Int_t j=0;j<fNbSamples;j++) refshape->SetValue(j,-coef[j]);
-      fgminref[cp]=refshape->GetMinimumBin(10,118);
+    fchi20[cp]=db->GetEntry_d("CALO_calib_WFChi20",run,i);
+    fchi21[cp]=db->GetEntry_d("CALO_calib_WFChi21",run,i);
+    fchi22[cp]=db->GetEntry_d("CALO_calib_WFChi22",run,i);
+    TString name("CALO_calib_ARSRefShape");name+=i;
+    coef=db->GetEntry_f(name.Data(),run);
 
-      delete coef;
-      if(option.Contains("data")){
-	for(Int_t ii=fgk1min;ii<fgk1max+1;ii++) InitMatrix1(fgM1[cp],ii,cp,opt,kTRUE);    
-	
-	for(Int_t k=fgk1min2;k<fgk1max2+1;k++) {
-	  for(Int_t j=fgk2min;j<fgk2max+1;j++) InitMatrix2(fgM2[cp][k+fmax[cp]],k,j,cp,opt,kTRUE);
-	}
+    for(Int_t j=0;j<fNbSamples;j++) refshape->SetValue(j,-coef[j]);
+    fgminref[cp]=refshape->GetMinimumBin(10,118); // FIXME: need to adjust MininumBin accordingly
+
+    delete coef;
+    if(option.Contains("data")){
+      for(Int_t ii=fgk1min;ii<fgk1max+1;ii++) InitMatrix1(fgM1[cp],ii,cp,opt,kTRUE);    
+      
+      for(Int_t k=fgk1min2;k<fgk1max2+1;k++) {
+	for(Int_t j=fgk2min;j<fgk2max+1;j++) InitMatrix2(fgM2[cp][k+fmax[cp]],k,j,cp,opt,kTRUE);
       }
-      if(option.Contains("LED")){
-	for(Int_t ii=fgk1min;ii<fgk1max+1;ii++) InitMatrix1(fgM1LED[cp],ii,cp,opt,kTRUE);
-      }
-      cp++;
     }
+    if(option.Contains("LED")){
+      for(Int_t ii=fgk1min;ii<fgk1max+1;ii++) InitMatrix1(fgM1LED[cp],ii,cp,opt,kTRUE);
+    }
+    cp++;
   }
+
   delete db;
 }
 
@@ -426,6 +368,7 @@ void TARSBase::InitShapeAnalysisLED(char *opt)
 
   Double_t dum=0;
 
+  // FIXME: the file format need to be updated 
   TString arsfile(getenv("DVCS_SOFT"));
   arsfile+="/initdata/arsbase.txt";
   ifstream inifile(arsfile.Data());
@@ -442,6 +385,7 @@ void TARSBase::InitShapeAnalysisLED(char *opt)
   arsfile2+="/initdata/refshape.txt";
   ifstream refshape(arsfile2.Data());
   
+  // FIXME: again, may need to replace the values as needed
   if(option.Contains("data")){
     fk1=7;
     fk1min=fkled-3;
@@ -470,7 +414,7 @@ void TARSBase::InitShapeAnalysisLED(char *opt)
 //____________________________________________________________________________
 void TARSBase::SetFirstWindow(Int_t min, Int_t max, char *opt, Bool_t kFORCE)
 {
-  //   It sets a different window to look for the first pulse.
+  //It sets a different window to look for the first pulse.
   //It does not recalculate matrices if already done, unless we force it to
   //do it via kFORCE
 
@@ -493,7 +437,7 @@ void TARSBase::SetFirstWindow(Int_t min, Int_t max, char *opt, Bool_t kFORCE)
 //____________________________________________________________________________
 void TARSBase::SetSecondWindow(Int_t min1, Int_t max1, Int_t min2, Int_t max2, char *opt, Bool_t kFORCE)
 {
-  //   It sets a different window to look for the second pulse.
+  //It sets a different window to look for the second pulse.
   //It does not recalculate matrices if already done, unless we force it to
   //do it via kFORCE
 
@@ -524,14 +468,15 @@ void TARSBase::InitMatrix2(TMatrixD** matrix2, Int_t k, Int_t j, Int_t i, char *
     if(option.Contains("data")) shaperef=(TDoubleArray*)fgRefShapes->UncheckedAt(i);
     if(option.Contains("LED")) shaperef=(TDoubleArray*)fgRefShapesLED->UncheckedAt(i);
     
+    //FIXME: why only initializing 8 elements of the array? the array size is 9 for fnval2
     for(Int_t i1=0;i1<8;i1++) fnval2[i1]=0.;
     for(Int_t s=fmin[i];s<fmax[i];s++){
-      if(s+k<110 && s+k>-1) fnval2[0]+=shaperef->GetValue(s+k)/fgpedsigma2[i][s];
+      if(s+k<fNbSamples && s+k>-1) fnval2[0]+=shaperef->GetValue(s+k)/fgpedsigma2[i][s];
       fnval2[2]+=1./fgpedsigma2[i][s];
-      if(s+k<110 && s+k>-1) fnval2[6]+=shaperef->GetValue(s+k)*shaperef->GetValue(s+k)/fgpedsigma2[i][s];
-      if(s+j<110 && s+j>-1) fnval2[1]+=shaperef->GetValue(s+j)/fgpedsigma2[i][s];
-      if(s+k<110 && s+k>-1 && s+j<110 && s+j>-1) fnval2[3]+=shaperef->GetValue(s+k)*shaperef->GetValue(s+j)/fgpedsigma2[i][s];
-      if(s+j<110 && s+j>-1) fnval2[4]+=shaperef->GetValue(s+j)*shaperef->GetValue(s+j)/fgpedsigma2[i][s];
+      if(s+k<fNbSamples && s+k>-1) fnval2[6]+=shaperef->GetValue(s+k)*shaperef->GetValue(s+k)/fgpedsigma2[i][s];
+      if(s+j<fNbSamples && s+j>-1) fnval2[1]+=shaperef->GetValue(s+j)/fgpedsigma2[i][s];
+      if(s+k<fNbSamples && s+k>-1 && s+j<fNbSamples && s+j>-1) fnval2[3]+=shaperef->GetValue(s+k)*shaperef->GetValue(s+j)/fgpedsigma2[i][s];
+      if(s+j<fNbSamples && s+j>-1) fnval2[4]+=shaperef->GetValue(s+j)*shaperef->GetValue(s+j)/fgpedsigma2[i][s];
     }	
 
     if(fgbfixed){
@@ -565,9 +510,9 @@ void TARSBase::InitMatrix1(TMatrixD** matrix1, Int_t k, Int_t i, char *opt, Bool
     
     for(Int_t i1=0;i1<4;i1++) fnval1[i1]=0.;
     for(Int_t s=fmin[i];s<fmax[i];s++){
-      if(s+k<110 && s+k>-1) fnval1[0]+=shaperef->GetValue(s+k)/fgpedsigma2[i][s];
+      if(s+k<fNbSamples && s+k>-1) fnval1[0]+=shaperef->GetValue(s+k)/fgpedsigma2[i][s];
       fnval1[1]+=1./fgpedsigma2[i][s];
-      if(s+k<110 && s+k>-1) fnval1[2]+=shaperef->GetValue(s+k)*shaperef->GetValue(s+k)/fgpedsigma2[i][s];
+      if(s+k<fNbSamples && s+k>-1) fnval1[2]+=shaperef->GetValue(s+k)*shaperef->GetValue(s+k)/fgpedsigma2[i][s];
     }
     fnval1[3]=fnval1[0];
     if(!matrix1[k+fmax[i]]) {
@@ -586,19 +531,16 @@ void TARSBase::Init(char *opt)
   //It initializes the number of channels and the number of samples
 
   TString option=opt;
-  //  cout<<"Init TARSBase"<<endl;
-  Int_t dum;
   // Initialization
   if (fgIsInit == kFALSE) {
     TString arsfile(getenv("DVCS_SOFT"));
-    arsfile+="/initdata/arsbase.txt";
+    arsfile+="/initdata/npsbase.txt";
     ifstream inifile(arsfile.Data());
-    inifile>>dum;
     inifile>>fNbChannelsCalo;
-    inifile>>fNbChannelsPA;
-    inifile>>fNbChannelsVeto;
     inifile>>fNbSamples;
-    if(fNbChannels==-1) fNbChannels=dum;
+
+    // FIXME: override the number of channels (we don't really need this Init if we also set the # of samples at class definition)
+    if(fNbChannels==-1) fNbChannels = fNbChannelsCalo;
   }
   
   fgARSParameters= new TARSParameters[fNbChannels];//Shape analysis parameters
@@ -682,7 +624,7 @@ void TARSBase::Add2RunningShape(TDoubleArray *wave, Int_t channel, Double_t amp,
   if(option.Contains("LED")) refshape=(TDoubleArray*)fgRefShapesLED->UncheckedAt(channel);
 
   cout<<"Befofe :"<<endl;
-  for(Int_t i=0;i<110; i++) cout<<refshape->GetValue(i)<<" ";
+  for(Int_t i=0;i<fNbSamples; i++) cout<<refshape->GetValue(i)<<" ";
   cout<<endl;
 
   if(time<fNbSamples && time>-(fNbSamples-1)){
@@ -719,7 +661,7 @@ void TARSBase::Add2RunningShape(TDoubleArray *wave, Int_t channel, Double_t amp,
   }
 
   cout<<"After :"<<endl;
-  for(Int_t i=0;i<110;i++) cout<<refshape->GetValue(i)<<" ";
+  for(Int_t i=0;i<fNbSamples;i++) cout<<refshape->GetValue(i)<<" ";
   cout<<endl;
 
 }  
@@ -735,25 +677,13 @@ void TARSBase::InitPedSigmaDB(Int_t run){
   cout<<"Number of channels "<<fNbChannels<<endl;
 
   Int_t cp=0;
-  for(Int_t i=0;i<fNbChannelsCalo+fNbChannelsPA+fNbChannelsVeto;i++){
-    if((i<fNbChannelsCalo && fgCaloWF) || (i<(fNbChannelsCalo+fNbChannelsPA)&&i>(fNbChannelsCalo-1)&&fgPAWF) || (i>(fNbChannelsCalo+fNbChannelsPA-1)&&fgVetoWF)){
+  for(Int_t i=0;i<fNbChannels; i++){
       Float_t *coef=0;
-      if(i<fNbChannelsCalo){
-	TString name("CALO_calib_ARSSigma");name+=i;
-	coef=db->GetEntry_f(name.Data(),run);
-      }
-      if(i<(fNbChannelsCalo+fNbChannelsPA)&&i>(fNbChannelsCalo-1)){
-	TString name("PA_calib_ARSSigma");name+=i-fNbChannelsCalo;
-	coef=db->GetEntry_f(name.Data(),run);
-      }
-      if(i>(fNbChannelsCalo+fNbChannelsPA-1)&&i<(fNbChannelsCalo+fNbChannelsPA+fNbChannelsVeto)){
-	TString name("VETO_calib_ARSSigma");name+=i-fNbChannelsPA-fNbChannelsCalo;
-	coef=db->GetEntry_f(name.Data(),run);
-      }
+      TString name("CALO_calib_ARSSigma");name+=i;
+      coef=db->GetEntry_f(name.Data(),run);
       for(Int_t j=0;j<fNbSamples;j++) fgpedsigma2[cp][j]=coef[j];
       cp++;
       delete coef;
-    }
   }
   delete db;
 }
@@ -768,38 +698,19 @@ void TARSBase::InitPedSigma(void)
     for(Int_t i=0;i<fNbChannels;i++){
       fgpedsigma2[i]=new Double_t[fNbSamples];
     }
-    //TSQLServer *db = TSQLServer::Connect("mysql://localhost/dvcs","carlos", "cebaF111");
-    //    if(db==0) {
-    //      cout<<"Pedestals sigmas successfully read from textfile"<<endl;
-      TString pedsig(getenv("DVCS_SOFT"));
-      pedsig+="/initdata/sigma.txt";
-      ifstream pedsigma(pedsig.Data());
-      Double_t val=0.;
-      //      cout<<"Number of channels "<<fNbChannels<<endl;
-      for(Int_t i=0;i<fNbChannels;i++){
-	for(Int_t j=0;j<fNbSamples;j++){
-	  pedsigma>>val;
-   	  fgpedsigma2[i][j]=val;//we assume one row
-	  //	  cout<<i<<" "<<j<< " "<<fgpedsigma2[i][j]<<endl;
-	}
+
+    // FIXME: the values are all 3. in the file
+    TString pedsig(getenv("DVCS_SOFT"));
+    pedsig+="/initdata/sigma.txt";
+    ifstream pedsigma(pedsig.Data());
+    Double_t val=0.;
+    for(Int_t i=0;i<fNbChannels;i++){
+      for(Int_t j=0;j<fNbSamples;j++){
+	// pedsigma>>val; //FIXME: put it back later
+	fgpedsigma2[i][j]=3.; // FIXME: use hard-coded value for now, for test
       }
-//     }else{
-//       TSQLRow *row;
-//       TSQLResult *res;
-//       for(Int_t i=0;i<fNbChannels;i++){
-// 	  TString sql("select sigma from dvcs.pedestalsigma WHERE channel=");
-// 	  sql+=i;
-// 	  res = db->Query(sql);
-// 	  Int_t nrows = res->GetRowCount();
-// 	  for (int j = 0; j < nrows; j++) {
-// 	    row = res->Next();
-// 	    fgpedsigma2[i][j]=TMath::Power(atof(row->GetField(0)),2.);//we assume one column
-// 	  }
-//       }
-//       delete row;
-//       delete res;
-//       delete db;
-//     }
+    }
+
 }
 
 
