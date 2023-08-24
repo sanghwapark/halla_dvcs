@@ -13,5 +13,7 @@
 #pragma link C++ class TARSReckon+;
 #pragma link C++ class TDoubleArray+;
 #pragma link C++ class TARSWave+;
+#pragma link C++ class TARSWave2+;
+#pragma link C++ class TDVCSDB+;
 
 #endif

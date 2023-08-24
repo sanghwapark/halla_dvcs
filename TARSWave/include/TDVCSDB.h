@@ -63,6 +63,10 @@ class TDVCSDB : public TObject
 
     Int_t GetLastValueId(const char* nametable, Int_t run);
     Int_t CreateTable(char* nametable, char* type, Int_t number);
+
+    //20190410(start)
+    Int_t DeleteTable(char* nametable);
+    //20190410(finish)
     
     Int_t AddEntry(char* tablename, Int_t runmin, Int_t runmax, Int_t col, Double_t val, char* comment=""); 
     Int_t AddEntry(char* tablename, Int_t run, Int_t runmin, Int_t runmax, Int_t col, Double_t val, char* comment=""); 
